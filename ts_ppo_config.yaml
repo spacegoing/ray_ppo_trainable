@@ -1,0 +1,106 @@
+resources: # change according to available resources
+  device: cpu
+  num_cpus: 1
+  num_gpus: 0
+debug_config:
+  debug_flag: False
+  # debug_flag: True
+  log_level: debug
+  max_concurrent_trials: 2 # consider num_cpus & memory size
+  max_report_frequency: 60 # per second
+  step_per_epoch: 3000
+  max_epoch: 10
+  # Tuners
+  quantile_fraction: 0.5
+ray_tune:
+  max_concurrent_trials: 50 # consider num_cpus & memory size
+  max_report_frequency: 10 # per second
+Tuner:
+  # General
+  test_burn_in_time_attr: 500
+  # Optuna
+  group: false
+  multivariate: true
+  asha_burn_in_time_attr: 20
+  # Pbt
+  perturbation_interval: 1
+  quantile_fraction: 0.2
+  resample_probability: 0.2
+debugging:
+  dashboard_host: 0.0.0.0
+  logdir: log
+  logger: tensorboard
+  log_level: info
+  # logger: wandb
+  wandb_project: mujoco.benchmark
+  # save top k train step
+  saving_top_k: 10
+  seed: 0
+running:
+  resume_id: null
+  resume_path: null
+rollouts:
+  num_envs_per_worker: 7
+  # For on-policy algos, buffer_size and step_per_collect should
+  # be the same
+  buffer_size: 2048
+  # this will be the batch_size
+  # rollout length for each env will be step_per_collect/num_envs
+  step_per_collect: 2048
+  step_per_epoch: 30000
+environment:
+  env: HalfCheetah-v4
+  # env: Humanoid-v3
+  obs_norm: true
+  # check env spec to set these methods
+  # use in policy/base.py:BasePolicy.map_action():
+  bound_action_method: clip # bound action to range [-1, 1]; clip, tanh or ''
+  # scale action to [action_spaces.low, action_spaces.high]
+  # executes after bound_action_method
+  action_scaling: true
+evaluation:
+  # eval_num_envs is also how many episodes will be evaluated
+  eval_num_envs_per_worker: 10
+  render: 0.0
+training:
+  max_epoch: 100
+  # Only used for GAE: the maximum size of the batch when
+  # computing GAE, depends on the size of available memory and
+  # the memory cost of the model; should be as large as possible
+  # within the memory constraint; here set to step_per_collect
+  max_batchsize: 2048
+  # used by trainer/base.py:__next__() self.batch_size ->
+  # onpolicy.py:policy_update_fn()->base.py:update()->policy.learn()
+  minibatch_size: 64
+  lr: 0.0003
+  lr_decay: true
+  # max_grad_norm: clipping sgd grads. default to null
+  # in PPOPolicy.learn()
+  max_grad_norm: 0.5
+  # paper what matters on-policy trick; for on-policy must be 1;
+  # recompute self.critic(obs) after each minibatch update
+  # in PPOPolicy.learn()
+  recompute_adv: true
+  # per minibatch adv normalization, in PPOPolicy.learn()
+  # set to true: boost performance while increasing variance
+  norm_adv: true
+  # used in _compute_returns
+  rew_norm: true
+  ent_coef: 0.0
+  vf_coef: 0.25
+  gamma: 0.99
+  gae_lambda: 0.95
+  ## ppo specific
+  repeat_per_collect: 10 # num of sgd for each collect
+  # two sigma paperv3 arXiv:1811.02553v3 Sec. 4.1.
+  # in PPOPolicy.learn()
+  value_clip: true
+  # MOBA paper arXiv:1912.09729 Equ. 5
+  # default 5.0, should be > 1.0. set to None if unwanted
+  # in PPOPolicy.learn()
+  dual_clip: null
+  eps_clip: 0.2 # ppo clip ratio
+model:
+  hidden_sizes:
+    - 128
+    - 128
